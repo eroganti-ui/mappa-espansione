@@ -164,7 +164,7 @@
 
   <footer class="side-foot">
     Fonte popolazione/densità: ISTAT (demo.istat.it / I.Stat), per comune. Per collegare il foglio Google in modo che ogni modifica appaia qui senza toccare il codice: pubblica ciascuna delle 4 schede come CSV (File → Condividi → Pubblica sul web) e incolla i 4 link nella costante CSV_URLS all'inizio del codice sorgente di questo file. Finché non lo fai, la pagina mostra i dati di esempio (Marche + provincia di Parma) incorporati nel file.
-    <br><br><strong>Versione file: 2026-09-15 · v3</strong> (chiave incorporata, numeri con virgola gestiti, ricalcolo automatico all'arrivo dei dati)
+    <br><br><strong>Versione file: 2026-09-15 · v4</strong> (tutte le regioni d'Italia, densità con fallback su popolazione dove non disponibile)
   </footer>
 </div></div>
 
@@ -349,9 +349,15 @@ function regionData(){
                ...concorrenti.map(c=>({name:c.nome_sede,type:'gym',stato:c.stato,lat:c.lat,lng:c.lng}))];
   return {comuni, sites};
 }
+function densityValue(c){
+  return (c.densita_ab_km2!==undefined && !isNaN(c.densita_ab_km2) && c.densita_ab_km2>0) ? c.densita_ab_km2 : c.popolazione;
+}
+function hasRealDensity(c){
+  return c.densita_ab_km2!==undefined && !isNaN(c.densita_ab_km2) && c.densita_ab_km2>0;
+}
 function makeDensityColorFn(list){
   if(!list.length) return ()=> "#78A58C";
-  const vals=list.map(c=>c.densita_ab_km2).sort((a,b)=>a-b);
+  const vals=list.map(densityValue).sort((a,b)=>a-b);
   const q=p=>vals[Math.min(vals.length-1,Math.floor(p*(vals.length-1)))];
   const stops=[q(0.2),q(0.4),q(0.6),q(0.8),vals[vals.length-1]];
   const cols=["#3A6B95","#78A58C","#D9B24C","#C8703B","#A8342A"];
@@ -372,14 +378,18 @@ function drawCircles(){
   const colorFn=makeDensityColorFn(comuni);
   if(document.getElementById('toggleCircles').checked){
     comuni.forEach(c=>{
+      const val=densityValue(c);
       const radius=400+Math.sqrt(c.popolazione)*24;
-      const circle=new google.maps.Circle({strokeColor:colorFn(c.densita_ab_km2),strokeOpacity:.75,strokeWeight:1.3,
-        fillColor:colorFn(c.densita_ab_km2),fillOpacity:.32,map,center:{lat:c.lat,lng:c.lng},radius});
+      const circle=new google.maps.Circle({strokeColor:colorFn(val),strokeOpacity:.75,strokeWeight:1.3,
+        fillColor:colorFn(val),fillOpacity:.32,map,center:{lat:c.lat,lng:c.lng},radius});
       circle.addListener('click',()=>{
+        const densRow = hasRealDensity(c)
+          ? `<tr><td>Densità</td><td class="v">${c.densita_ab_km2.toLocaleString('it-IT')} ab./km²</td></tr>`
+          : `<tr><td colspan="2" style="font-size:11px;color:#8B9490;">Densità non ancora disponibile — colore basato sulla popolazione</td></tr>`;
+        const areaRow = (c.superficie_km2 && !isNaN(c.superficie_km2)) ? `<tr><td>Superficie</td><td class="v">${c.superficie_km2.toLocaleString('it-IT')} km²</td></tr>` : '';
         infoWin.setContent(`<div class="infowin"><h3>${c.comune} <span style="color:#8B9490;font-weight:400;font-size:12px;">(${c.provincia})</span></h3>
           <table><tr><td>Popolazione</td><td class="v">${c.popolazione.toLocaleString('it-IT')}</td></tr>
-          <tr><td>Superficie</td><td class="v">${c.superficie_km2.toLocaleString('it-IT')} km²</td></tr>
-          <tr><td>Densità</td><td class="v">${c.densita_ab_km2.toLocaleString('it-IT')} ab./km²</td></tr></table></div>`);
+          ${areaRow}${densRow}</table></div>`);
         infoWin.setPosition({lat:c.lat,lng:c.lng}); infoWin.open(map);
       });
       circleLayer.push(circle);
@@ -444,10 +454,10 @@ function computeOpportunity(){
   const {comuni,sites}=regionData();
   const list=document.getElementById('opp-list'); list.innerHTML='';
   if(!comuni.length) return;
-  const maxDensity=Math.max(...comuni.map(c=>c.densita_ab_km2));
+  const maxDensity=Math.max(...comuni.map(densityValue));
   const scored=comuni.map(c=>{
     const minDist = sites.length ? Math.min(...sites.map(s=>haversine(c.lat,c.lng,s.lat,s.lng))) : 30;
-    const normDensity=c.densita_ab_km2/maxDensity;
+    const normDensity=densityValue(c)/maxDensity;
     const normDist=Math.min(minDist/30,1);
     return {...c, minDist, score:Math.round((normDensity*0.6+normDist*0.4)*100)};
   }).sort((a,b)=>b.score-a.score).slice(0,6);
@@ -457,9 +467,12 @@ function computeOpportunity(){
         icon:{path:google.maps.SymbolPath.CIRCLE,scale:0},
         label:{text:'★',color:'#C8933F',fontSize:'22px'}, zIndex:999});
       marker.addListener('click',()=>{
+        const densLine = hasRealDensity(c)
+          ? `<tr><td>Densità</td><td class="v">${c.densita_ab_km2.toLocaleString('it-IT')} ab./km²</td></tr>`
+          : `<tr><td>Popolazione</td><td class="v">${c.popolazione.toLocaleString('it-IT')}</td></tr>`;
         infoWin.setContent(`<div class="infowin"><h3>${c.comune}</h3><table>
           <tr><td>Punteggio</td><td class="v">${c.score}/100</td></tr>
-          <tr><td>Densità</td><td class="v">${c.densita_ab_km2.toLocaleString('it-IT')} ab./km²</td></tr>
+          ${densLine}
           <tr><td>Dist. dal più vicino</td><td class="v">${c.minDist.toFixed(1)} km</td></tr></table></div>`);
         infoWin.setPosition({lat:c.lat,lng:c.lng}); infoWin.open(map);
       });
@@ -476,9 +489,12 @@ function computeOpportunity(){
 function buildRanking(){
   const {comuni}=regionData();
   const list=document.getElementById('ranking'); list.innerHTML='';
-  comuni.slice().sort((a,b)=>b.densita_ab_km2-a.densita_ab_km2).forEach((c,i)=>{
+  const allReal = comuni.every(hasRealDensity);
+  document.querySelector('#ranking').previousElementSibling.textContent = allReal ? "Comuni per densità abitativa" : "Comuni per densità (o popolazione se non disponibile)";
+  comuni.slice().sort((a,b)=>densityValue(b)-densityValue(a)).forEach((c,i)=>{
     const li=document.createElement('li');
-    li.innerHTML=`<span class="rank">${i+1}</span><span class="town">${c.comune}</span><span class="dens">${c.densita_ab_km2.toLocaleString('it-IT')}/km²</span>`;
+    const label = hasRealDensity(c) ? `${c.densita_ab_km2.toLocaleString('it-IT')}/km²` : `${c.popolazione.toLocaleString('it-IT')} ab.`;
+    li.innerHTML=`<span class="rank">${i+1}</span><span class="town">${c.comune}</span><span class="dens">${label}</span>`;
     li.addEventListener('click',()=>{ map.panTo({lat:c.lat,lng:c.lng}); map.setZoom(12); });
     list.appendChild(li);
   });
