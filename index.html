@@ -265,7 +265,11 @@ const FALLBACK_REGIONI = [
 ["Emilia-Romagna",44.75,10.15,9,"#3C6E68"]
 ].map(r=>({regione:r[0],lat_centro_mappa:r[1],lng_centro_mappa:r[2],zoom_default:r[3],colore_tema:r[4]}));
 
-/* ---------------- CSV parsing (gestisce virgole tra virgolette) ---------------- */
+/* ---------------- CSV parsing (gestisce virgole tra virgolette e numeri in formato italiano 43,6158) ---------------- */
+function toNum(v){
+  if(v===undefined||v===null||v==='') return NaN;
+  return parseFloat(String(v).trim().replace(',','.'));
+}
 function parseCSV(text){
   const rows=[]; let row=[]; let field=''; let inQuotes=false;
   for(let i=0;i<text.length;i++){
@@ -303,16 +307,17 @@ async function loadData(){
   status.textContent='Caricamento dati…'; status.className='data-status';
   const [comuni, concorrenti, centri_opi, regioni] = await Promise.all([
     loadOne('comuni', FALLBACK_COMUNI, r=>({regione:r.regione, provincia:r.provincia, comune:r.comune,
-      popolazione:+r.popolazione, superficie_km2:+r.superficie_km2, densita_ab_km2:+r.densita_ab_km2, lat:+r.lat, lng:+r.lng})),
-    loadOne('concorrenti', FALLBACK_CONCORRENTI, r=>({regione:r.regione, catena:r.catena, nome_sede:r.nome_sede, stato:r.stato, lat:+r.lat, lng:+r.lng})),
-    loadOne('centri_opi', FALLBACK_CENTRI_OPI, r=>({regione:r.regione, nome_centro:r.nome_centro, lat:+r.lat, lng:+r.lng})),
-    loadOne('regioni_config', FALLBACK_REGIONI, r=>({regione:r.regione, lat_centro_mappa:+r.lat_centro_mappa, lng_centro_mappa:+r.lng_centro_mappa, zoom_default:+r.zoom_default||9, colore_tema:r.colore_tema}))
+      popolazione:toNum(r.popolazione), superficie_km2:toNum(r.superficie_km2), densita_ab_km2:toNum(r.densita_ab_km2), lat:toNum(r.lat), lng:toNum(r.lng)})),
+    loadOne('concorrenti', FALLBACK_CONCORRENTI, r=>({regione:r.regione, catena:r.catena, nome_sede:r.nome_sede, stato:r.stato, lat:toNum(r.lat), lng:toNum(r.lng)})),
+    loadOne('centri_opi', FALLBACK_CENTRI_OPI, r=>({regione:r.regione, nome_centro:r.nome_centro, lat:toNum(r.lat), lng:toNum(r.lng)})),
+    loadOne('regioni_config', FALLBACK_REGIONI, r=>({regione:r.regione, lat_centro_mappa:toNum(r.lat_centro_mappa), lng_centro_mappa:toNum(r.lng_centro_mappa), zoom_default:toNum(r.zoom_default)||9, colore_tema:r.colore_tema}))
   ]);
   DATA={comuni,concorrenti,centri_opi,regioni};
   const anyLive = Object.values(CSV_URLS).some(u=>u && u.trim());
   status.textContent = anyLive ? 'Dati caricati dal foglio Google.' : 'Dati di esempio incorporati (Marche + Parma) — collega il foglio per il resto.';
   status.className = anyLive ? 'data-status live' : 'data-status demo';
   populateRegionSelect();
+  if(map) applyRegion(); // se la mappa era già pronta prima dei dati, ridisegna ora che sono arrivati
 }
 async function loadOne(key, fallbackArr, mapRow){
   const url=CSV_URLS[key];
@@ -320,7 +325,7 @@ async function loadOne(key, fallbackArr, mapRow){
   try{
     const rows=await fetchCSV(url);
     if(!rows.length) return fallbackArr;
-    return rows.map(mapRow);
+    return rows.map(mapRow).filter(r=> !('lat' in r) || (!isNaN(r.lat) && !isNaN(r.lng)) );
   }catch(e){ console.warn('CSV non raggiungibile per', key, e); return fallbackArr; }
 }
 
