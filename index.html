@@ -87,10 +87,10 @@
   <div class="block">
     <p class="block-title">Chiave API Google Maps</p>
     <div class="key-row">
-      <input type="password" id="apiKeyInput" placeholder="Incolla qui la chiave">
+      <input type="password" id="apiKeyInput" placeholder="Solo se vuoi sostituire quella incorporata">
       <button class="btn" id="loadMapBtn">Carica mappa</button>
     </div>
-    <p class="key-status" id="keyStatus">Resta solo in questa sessione del browser: non viene salvata né inviata altrove.</p>
+    <p class="key-status" id="keyStatus">La mappa si carica da sola con la chiave già incorporata nel file. Usa il campo solo per sostituirla temporaneamente.</p>
   </div>
 
   <div class="block">
@@ -188,6 +188,10 @@ const CSV_URLS = {
   centri_opi: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOfTw68Oz7VJq_vdG_uiVXAQunB-vO8dm2XD_Fsh5mfMojhaTb-DToiRlWKBkeS_uMlVQKU5VQJl4/pub?gid=2317496&single=true&output=csv",
   regioni_config: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOfTw68Oz7VJq_vdG_uiVXAQunB-vO8dm2XD_Fsh5mfMojhaTb-DToiRlWKBkeS_uMlVQKU5VQJl4/pub?gid=790128416&single=true&output=csv"
 };
+
+/* Chiave Google Maps già incorporata: la pagina carica la mappa da sola, senza chiederla.
+   Deve avere la restrizione "Referrer HTTP" impostata sul dominio github.io del repository. */
+const DEFAULT_API_KEY = "AIzaSyB_LOB3P46HFzbj-EWzdoTAgteqM8A3IJ0";
 
 /* ---------------- Dati di esempio incorporati (Marche + provincia di Parma) ---------------- */
 const FALLBACK_COMUNI = [
@@ -534,6 +538,11 @@ document.getElementById('loadMapBtn').addEventListener('click',()=>{
   if(!key){ const s=document.getElementById('keyStatus'); s.textContent='Incolla prima una chiave valida.'; s.className='key-status err'; return; }
   loadGoogleMaps(key);
 });
+
+// Avvio automatico: se DEFAULT_API_KEY è impostata, la mappa si carica da sola, senza bisogno di incollare nulla.
+if(DEFAULT_API_KEY && DEFAULT_API_KEY.trim()){
+  loadGoogleMaps(DEFAULT_API_KEY.trim());
+}
 
 loadData();
 </script>
