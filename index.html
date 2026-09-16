@@ -164,7 +164,7 @@
 
   <footer class="side-foot">
     Fonte popolazione/densità: ISTAT (demo.istat.it / I.Stat), per comune. Per collegare il foglio Google in modo che ogni modifica appaia qui senza toccare il codice: pubblica ciascuna delle 4 schede come CSV (File → Condividi → Pubblica sul web) e incolla i 4 link nella costante CSV_URLS all'inizio del codice sorgente di questo file. Finché non lo fai, la pagina mostra i dati di esempio (Marche + provincia di Parma) incorporati nel file.
-    <br><br><strong>Versione file: 2026-09-15 · v4</strong> (tutte le regioni d'Italia, densità con fallback su popolazione dove non disponibile)
+    <br><br><strong>Versione file: 2026-09-16 · v5</strong> (collegato al nuovo foglio su account personale, fuori dalle restrizioni Workspace)
   </footer>
 </div></div>
 
@@ -184,10 +184,10 @@
    Lasciando le stringhe vuote, la pagina usa i dati di esempio qui sotto.
    ============================================================ */
 const CSV_URLS = {
-  comuni: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOfTw68Oz7VJq_vdG_uiVXAQunB-vO8dm2XD_Fsh5mfMojhaTb-DToiRlWKBkeS_uMlVQKU5VQJl4/pub?gid=536343714&single=true&output=csv",
-  concorrenti: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOfTw68Oz7VJq_vdG_uiVXAQunB-vO8dm2XD_Fsh5mfMojhaTb-DToiRlWKBkeS_uMlVQKU5VQJl4/pub?gid=787744831&single=true&output=csv",
-  centri_opi: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOfTw68Oz7VJq_vdG_uiVXAQunB-vO8dm2XD_Fsh5mfMojhaTb-DToiRlWKBkeS_uMlVQKU5VQJl4/pub?gid=2317496&single=true&output=csv",
-  regioni_config: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOfTw68Oz7VJq_vdG_uiVXAQunB-vO8dm2XD_Fsh5mfMojhaTb-DToiRlWKBkeS_uMlVQKU5VQJl4/pub?gid=790128416&single=true&output=csv"
+  comuni: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuq_9MbBSiwBg6v9I-Up1f2ssjEEAyxzLuw-uAy5mJBjjb4nM3PLrQpvXM6FNFkhrp1fQDnI2_zOck/pub?gid=2070998667&single=true&output=csv",
+  concorrenti: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuq_9MbBSiwBg6v9I-Up1f2ssjEEAyxzLuw-uAy5mJBjjb4nM3PLrQpvXM6FNFkhrp1fQDnI2_zOck/pub?gid=989788253&single=true&output=csv",
+  centri_opi: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuq_9MbBSiwBg6v9I-Up1f2ssjEEAyxzLuw-uAy5mJBjjb4nM3PLrQpvXM6FNFkhrp1fQDnI2_zOck/pub?gid=57552742&single=true&output=csv",
+  regioni_config: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuq_9MbBSiwBg6v9I-Up1f2ssjEEAyxzLuw-uAy5mJBjjb4nM3PLrQpvXM6FNFkhrp1fQDnI2_zOck/pub?gid=277077633&single=true&output=csv"
 };
 
 /* Chiave Google Maps già incorporata: la pagina carica la mappa da sola, senza chiederla.
